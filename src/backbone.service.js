@@ -30,7 +30,7 @@ export default Backbone.Model.extend.call(Radio.Channel, {
         value = function() {
           // Ensure service is always started.
           return Promise.resolve(this.start()).then(() => {
-            this[name](...arguments);
+            return this[name](...arguments);
           });
         };
       } else {

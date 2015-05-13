@@ -112,4 +112,21 @@ describe('Service', function() {
   it('should add properties to the service leaving them as is', function() {
     expect(this.MyService).to.have.property('property', 'value');
   });
+
+  it('should not resolve request until returned promise is resolved', function() {
+    let resolved = false;
+
+    this.MyService.method = () => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          expect(resolved).to.be.false;
+          resolve();
+        }, 1);
+      });
+    };
+
+    return this.MyService.request('method').then(() => {
+      resolved = true;
+    });
+  });
 });
