@@ -11,34 +11,45 @@ export default Backbone.Model.extend.call(Radio.Channel, {
    * @constructs Service
    * @param {Object} methods
    */
-  constructor(methods) {
-    _.each(methods, (method, name) => {
+  constructor(props) {
+    _.each(props, (value, name) => {
       // start method should only ever be called once.
       if (name === 'start') {
-        method = _.once(method);
+        value = _.once(value);
       }
 
-      // Add the method directly to the service object.
-      this[name] = method;
+      // Add the property directly to the service object.
+      this[name] = value;
+
+      // Leave non-functions and initialize() as is.
+      if (!_.isFunction(value) || name === 'initialize') {
+        return;
+      }
 
       if (name !== 'start') {
-        method = function() {
+        value = function() {
           // Ensure service is always started.
           return Promise.resolve(this.start()).then(() => {
             this[name](...arguments);
           });
         };
       } else {
-        method = function() {
+        value = function() {
           return Promise.resolve(this.start(...arguments));
         };
       }
 
       // Register as both a Request and Command for convenience.
-      this.reply(name, method);
-      this.comply(name, method);
+      this.reply(name, value);
+      this.comply(name, value);
     });
   },
+
+  /**
+   * @abstract
+   * @method initialize
+   */
+  initialize() {},
 
   /**
    * @abstract

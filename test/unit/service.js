@@ -2,10 +2,13 @@ import Service from '../../src/backbone.service';
 
 describe('Service', function() {
   beforeEach(function() {
+    this.initializeStub = stub();
     this.startStub = stub();
     this.MyService = new Service({
+      initialize: this.initializeStub,
       start: this.startStub,
-      method: stub()
+      method: stub(),
+      property: 'value'
     });
   });
 
@@ -53,8 +56,8 @@ describe('Service', function() {
   });
 
   it('should only call start() once', function() {
-    this.MyService.start();
-    this.MyService.start();
+    this.MyService.request('start');
+    this.MyService.request('start');
     expect(this.startStub).to.have.been.calledOnce;
   });
 
@@ -95,5 +98,18 @@ describe('Service', function() {
     };
 
     this.MyService.command('method');
+  });
+
+  it('should leave initialize() as is', function() {
+    expect(this.MyService.initialize).to.equal(this.initializeStub);
+    this.MyService.request('initialize');
+    this.MyService.command('initialize');
+    expect(this.initializeStub).not.to.be.called;
+    this.MyService.initialize();
+    expect(this.initializeStub).to.be.called;
+  });
+
+  it('should add properties to the service leaving them as is', function() {
+    expect(this.MyService).to.have.property('property', 'value');
   });
 });
