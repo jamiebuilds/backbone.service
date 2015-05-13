@@ -33,7 +33,7 @@
 
             // Ensure service is always started.
             return Promise.resolve(this.start()).then(function () {
-              _this2[name].apply(_this2, _arguments);
+              return _this2[name].apply(_this2, _arguments);
             });
           };
         } else {
