@@ -9,20 +9,25 @@
      * @constructs Service
      * @param {Object} methods
      */
-    constructor: function constructor(methods) {
+    constructor: function constructor(props) {
       var _this = this;
 
-      _.each(methods, function (method, name) {
+      _.each(props, function (value, name) {
         // start method should only ever be called once.
         if (name === 'start') {
-          method = _.once(method);
+          value = _.once(value);
         }
 
-        // Add the method directly to the service object.
-        _this[name] = method;
+        // Add the property directly to the service object.
+        _this[name] = value;
+
+        // Leave non-functions and initialize() as is.
+        if (!_.isFunction(value) || name === 'initialize') {
+          return;
+        }
 
         if (name !== 'start') {
-          method = function () {
+          value = function () {
             var _this2 = this,
                 _arguments = arguments;
 
@@ -32,16 +37,22 @@
             });
           };
         } else {
-          method = function () {
+          value = function () {
             return Promise.resolve(this.start.apply(this, arguments));
           };
         }
 
         // Register as both a Request and Command for convenience.
-        _this.reply(name, method);
-        _this.comply(name, method);
+        _this.reply(name, value);
+        _this.comply(name, value);
       });
     },
+
+    /**
+     * @abstract
+     * @method initialize
+     */
+    initialize: function initialize() {},
 
     /**
      * @abstract
