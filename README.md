@@ -13,6 +13,39 @@ Simple service class for Backbone.
 > _**Note:** Backbone.Service requires a global `Promise` object to
 > exist, please include a `Promise` polyfill if necessary._
 
+```js
+import Service from 'backbone.service';
+
+const AuthService = new Service({
+  start() {
+    this.user = new User();
+    return this.user.fetch();
+  },
+
+  isAuthenticated() {
+    return this.user.get('isAuthenticated');
+  },
+
+  authenticate() {
+    this.user.authenticate();
+  }
+});
+
+const Page = View.extend({
+  render() {
+    AuthService.request('isAuthenticated').then(isAuthenticated => {
+      if (isAuthenticated) {
+        this.$el.html('Welcome!');
+      } else {
+        this.$el.html('Permission denied.')
+        AuthService.command('authenticate');
+        this.listenToOnce(AuthService, 'authenticated', this.render);
+      }
+    });
+  }
+});
+```
+
 ## Contibuting
 
 ### Getting Started
