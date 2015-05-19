@@ -1,7 +1,9 @@
 import Backbone from 'backbone';
 import Radio from 'backbone.radio';
 import _ from 'underscore';
-import {Promise} from 'es6-promise';
+import PromisePolyfill from 'es6-promise';
+
+const resolved = PromisePolyfill.Promise.resolve();
 
 /**
  * @class Service
@@ -14,11 +16,6 @@ export default Backbone.Model.extend.call(Radio.Channel, {
    */
   constructor(props) {
     _.each(props, (value, name) => {
-      // start method should only ever be called once.
-      if (name === 'start') {
-        value = _.once(value);
-      }
-
       // Add the property directly to the service object.
       this[name] = value;
 
@@ -30,14 +27,11 @@ export default Backbone.Model.extend.call(Radio.Channel, {
       if (name !== 'start') {
         value = function() {
           // Ensure service is always started.
-          return Promise.resolve(this.start()).then(() => {
-            return this[name](...arguments);
-          });
+          return this.request('start').then(() => this[name](...arguments));
         };
       } else {
-        value = function() {
-          return Promise.resolve(this.start(...arguments));
-        };
+        // start method should only ever be called once.
+        value = _.once(() => resolved.then(() => this.start()));
       }
 
       // Register as both a Request and Command for convenience.
