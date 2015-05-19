@@ -1,8 +1,13 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('backbone.radio'), require('underscore')) : typeof define === 'function' && define.amd ? define(['backbone', 'backbone.radio', 'underscore'], factory) : global.Backbone.Service = factory(global.Backbone, global.Radio, global._);
-})(this, function (Backbone, Radio, _) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('backbone.radio'), require('underscore'), require('es6-promise')) : typeof define === 'function' && define.amd ? define(['backbone', 'backbone.radio', 'underscore', 'es6-promise'], factory) : global.Backbone.Service = factory(global.Backbone, global.Radio, global._, global.PromisePolyfill);
+})(this, function (Backbone, Radio, _, PromisePolyfill) {
   'use strict';
 
+  var resolved = PromisePolyfill.Promise.resolve();
+
+  /**
+   * @class Service
+   */
   var backbone_service = Backbone.Model.extend.call(Radio.Channel, {
 
     /**
@@ -13,11 +18,6 @@
       var _this = this;
 
       _.each(props, function (value, name) {
-        // start method should only ever be called once.
-        if (name === 'start') {
-          value = _.once(value);
-        }
-
         // Add the property directly to the service object.
         _this[name] = value;
 
@@ -32,14 +32,17 @@
                 _arguments = arguments;
 
             // Ensure service is always started.
-            return Promise.resolve(this.start()).then(function () {
+            return this.request('start').then(function () {
               return _this2[name].apply(_this2, _arguments);
             });
           };
         } else {
-          value = function () {
-            return Promise.resolve(this.start.apply(this, arguments));
-          };
+          // start method should only ever be called once.
+          value = _.once(function () {
+            return resolved.then(function () {
+              return _this.start();
+            });
+          });
         }
 
         // Register as both a Request and Command for convenience.
