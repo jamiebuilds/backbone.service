@@ -1,6 +1,7 @@
 import Backbone from 'backbone';
 import Radio from 'backbone.radio';
 import _ from 'underscore';
+import {Promise} from 'es6-promise';
 
 /**
  * @class Service
