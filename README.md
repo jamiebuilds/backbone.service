@@ -16,10 +16,18 @@ Simple service class for Backbone.
 ```js
 import Service from 'backbone.service';
 
-const AuthService = new Service({
+const AuthService = Service.extend({
   start() {
     this.user = new User();
     return this.user.fetch();
+  },
+
+  requests: {
+    isAuthenticated: 'isAuthenticated'
+  },
+
+  commands: {
+    authenticate: 'authenticate'
   },
 
   isAuthenticated() {
@@ -28,20 +36,51 @@ const AuthService = new Service({
 
   authenticate() {
     this.user.authenticate();
+  },
+
+  onError(err) {
+    console.log('Err!', err);
   }
 });
 
+const authService = new AuthService();
+
 const Page = View.extend({
   render() {
-    AuthService.request('isAuthenticated').then(isAuthenticated => {
+    authService.request('isAuthenticated').then(isAuthenticated => {
       if (isAuthenticated) {
         this.$el.html('Welcome!');
       } else {
         this.$el.html('Permission denied.')
-        AuthService.command('authenticate');
-        this.listenToOnce(AuthService, 'authenticated', this.render);
+        this.listenToOnce(authService, 'authenticated', this.render);
+        authService.command('authenticate');
       }
     });
+  }
+});
+
+// Which would behave like you wrote all of this:
+
+const Page = View.extend({
+  render() {
+    Promise.resolve()
+      .then(() => {
+        if (!authService.isStarted) {
+          return authService.start()
+        }
+      })
+      .then(() => authService.isAuthenticated())
+      .then(() => {
+        if (isAuthenticated) {
+          this.$el.html('Welcome!');
+        } else {
+          this.$el.html('Permission denied.')
+          this.listenToOnce(authService, 'authenticated', this.render);
+          Promise.resolve()
+            .then(() => authService.authenticate())
+            .catch(err => authService.onError);
+        }
+      }).catch(err => authService.onError);
   }
 });
 ```

@@ -1,54 +1,69 @@
-import Backbone from 'backbone';
+import classify from 'backbone-metal-classify';
+import normalizeHash from 'backbone-normalize-hash';
 import Radio from 'backbone.radio';
 import _ from 'underscore';
 import PromisePolyfill from 'es6-promise';
 
 const resolved = PromisePolyfill.Promise.resolve();
 
+Radio.Channel = classify(Radio.Channel);
+
+/**
+ * @private
+ * @method wrapHash
+ * @param {Object} hash
+ * @param {Function} start
+ */
+function wrapHash(service, type, start) {
+  let hash = normalizeHash(service, type);
+
+  _.each(hash, (val, key) => {
+    hash[key] = (...args) => {
+      return start()
+        .then(() => service[key](...args))
+        .catch(err => {
+          service.onError(err);
+          throw err;
+        });
+    };
+  });
+
+  return hash;
+}
+
 /**
  * @class Service
  */
-export default Backbone.Model.extend.call(Radio.Channel, {
-
+export default Radio.Channel.extend({
   /**
    * @constructs Service
-   * @param {Object} methods
    */
-  constructor(props) {
-    _.each(props, (value, name) => {
-      // Add the property directly to the service object.
-      this[name] = value;
+  constructor() {
+    let start = _.once(() => resolved.then(() => this.start()));
 
-      // Leave non-functions and initialize() as is.
-      if (!_.isFunction(value) || name === 'initialize') {
-        return;
-      }
+    let requests = wrapHash(this, 'requests', start);
+    let commands = wrapHash(this, 'commands', start);
 
-      if (name !== 'start') {
-        value = function() {
-          // Ensure service is always started.
-          return this.request('start').then(() => this[name](...arguments));
-        };
-      } else {
-        // start method should only ever be called once.
-        value = _.once(() => resolved.then(() => this.start()));
-      }
-
-      // Register as both a Request and Command for convenience.
-      this.reply(name, value);
-      this.comply(name, value);
-    });
+    this.reply(requests);
+    this.comply(commands);
+    this._super(...arguments);
   },
 
   /**
    * @abstract
-   * @method initialize
+   * @method setup
    */
-  initialize() {},
+  setup() {},
 
   /**
    * @abstract
    * @method start
    */
-  start() {}
+  start() {},
+
+  /**
+   * @abstract
+   * @method onError
+   */
+  onError() {}
 });
