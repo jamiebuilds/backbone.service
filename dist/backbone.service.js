@@ -1,67 +1,80 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('backbone.radio'), require('underscore'), require('es6-promise')) : typeof define === 'function' && define.amd ? define(['backbone', 'backbone.radio', 'underscore', 'es6-promise'], factory) : global.Backbone.Service = factory(global.Backbone, global.Radio, global._, global.PromisePolyfill);
-})(this, function (Backbone, Radio, _, PromisePolyfill) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone-metal-classify'), require('backbone-normalize-hash'), require('backbone.radio'), require('underscore'), require('es6-promise')) : typeof define === 'function' && define.amd ? define(['backbone-metal-classify', 'backbone-normalize-hash', 'backbone.radio', 'underscore', 'es6-promise'], factory) : global.Backbone.Service = factory(global.classify, global.normalizeHash, global.Radio, global._, global.PromisePolyfill);
+})(this, function (classify, normalizeHash, Radio, _, PromisePolyfill) {
   'use strict';
 
   var resolved = PromisePolyfill.Promise.resolve();
 
+  Radio.Channel = classify(Radio.Channel);
+
+  /**
+   * @private
+   * @method wrapHash
+   * @param {Object} hash
+   * @param {Function} start
+   */
+  function wrapHash(service, type, start) {
+    var hash = normalizeHash(service, type);
+
+    _.each(hash, function (val, key) {
+      hash[key] = function () {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
+        }
+
+        return start().then(function () {
+          return service[key].apply(service, args);
+        })['catch'](function (err) {
+          service.onError(err);
+          throw err;
+        });
+      };
+    });
+
+    return hash;
+  }
+
   /**
    * @class Service
    */
-  var backbone_service = Backbone.Model.extend.call(Radio.Channel, {
-
+  var backbone_service = Radio.Channel.extend({
     /**
      * @constructs Service
-     * @param {Object} methods
      */
-    constructor: function constructor(props) {
+    constructor: function constructor() {
       var _this = this;
 
-      _.each(props, function (value, name) {
-        // Add the property directly to the service object.
-        _this[name] = value;
-
-        // Leave non-functions and initialize() as is.
-        if (!_.isFunction(value) || name === 'initialize') {
-          return;
-        }
-
-        if (name !== 'start') {
-          value = function () {
-            var _this2 = this,
-                _arguments = arguments;
-
-            // Ensure service is always started.
-            return this.request('start').then(function () {
-              return _this2[name].apply(_this2, _arguments);
-            });
-          };
-        } else {
-          // start method should only ever be called once.
-          value = _.once(function () {
-            return resolved.then(function () {
-              return _this.start();
-            });
-          });
-        }
-
-        // Register as both a Request and Command for convenience.
-        _this.reply(name, value);
-        _this.comply(name, value);
+      var start = _.once(function () {
+        return resolved.then(function () {
+          return _this.start();
+        });
       });
+
+      var requests = wrapHash(this, 'requests', start);
+      var commands = wrapHash(this, 'commands', start);
+
+      this.reply(requests);
+      this.comply(commands);
+      this._super.apply(this, arguments);
     },
 
     /**
      * @abstract
-     * @method initialize
+     * @method setup
      */
-    initialize: function initialize() {},
+    setup: function setup() {},
 
     /**
      * @abstract
      * @method start
      */
-    start: function start() {}
+    start: function start() {},
+
+    /**
+     * @abstract
+     * @method onError
+     */
+    onError: function onError() {}
   });
 
   return backbone_service;
