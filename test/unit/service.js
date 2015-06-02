@@ -12,10 +12,6 @@ describe('Service', function() {
         foo: 'foo',
         bar: 'bar',
       },
-      commands: {
-        foo: 'foo',
-        bar: 'bar',
-      },
 
       foo: stub(),
       bar: stub()
@@ -25,12 +21,6 @@ describe('Service', function() {
   });
 
   it('should bind requests', function() {
-    return this.myService.request('foo').then(() => {
-      expect(this.myService.foo).to.have.been.called;
-    });
-  });
-
-  it('should bind commands', function() {
     return this.myService.request('foo').then(() => {
       expect(this.myService.foo).to.have.been.called;
     });

@@ -9,29 +9,6 @@ const resolved = PromisePolyfill.Promise.resolve();
 Radio.Channel = classify(Radio.Channel);
 
 /**
- * @private
- * @method wrapHash
- * @param {Object} hash
- * @param {Function} start
- */
-function wrapHash(service, type, start) {
-  let hash = normalizeHash(service, type);
-
-  _.each(hash, (val, key) => {
-    hash[key] = (...args) => {
-      return start()
-        .then(() => service[key](...args))
-        .catch(err => {
-          service.onError(err);
-          throw err;
-        });
-    };
-  });
-
-  return hash;
-}
-
-/**
  * @class Service
  */
 export default Radio.Channel.extend({
@@ -40,12 +17,19 @@ export default Radio.Channel.extend({
    */
   constructor() {
     let start = _.once(() => resolved.then(() => this.start()));
+    let requests = normalizeHash(this, 'requests');
 
-    let requests = wrapHash(this, 'requests', start);
-    let commands = wrapHash(this, 'commands', start);
+    _.each(requests, (val, key) => {
+      this.reply(key, (...args) => {
+        return start()
+          .then(() => this[key](...args))
+          .catch(err => {
+            this.onError(err);
+            throw err;
+          });
+      });
+    });
 
-    this.reply(requests);
-    this.comply(commands);
     this._super(...arguments);
   },
 

@@ -23,10 +23,7 @@ const AuthService = Service.extend({
   },
 
   requests: {
-    isAuthenticated: 'isAuthenticated'
-  },
-
-  commands: {
+    isAuthenticated: 'isAuthenticated',
     authenticate: 'authenticate'
   },
 
@@ -50,11 +47,13 @@ const Page = View.extend({
     authService.request('isAuthenticated').then(isAuthenticated => {
       if (isAuthenticated) {
         this.$el.html('Welcome!');
-      } else {
-        this.$el.html('Permission denied.')
-        this.listenToOnce(authService, 'authenticated', this.render);
-        authService.command('authenticate');
+        return;
       }
+
+      this.$el.html('Permission denied.')
+      return authService.request('authenticate').then(() => this.render());
+    }).catch(err => {
+      this.$el.html('Oh no!');
     });
   }
 });
@@ -66,21 +65,33 @@ const Page = View.extend({
     Promise.resolve()
       .then(() => {
         if (!authService.isStarted) {
-          return authService.start()
+          return authService.start().catch(err => {
+            authService.onError(err);
+            throw err;
+          }))
         }
       })
-      .then(() => authService.isAuthenticated())
-      .then(() => {
+      .then(() => authService.isAuthenticated().catch(err => {
+        authService.onError(err);
+        throw err;
+      })))
+      .then(isAuthenticated => {
         if (isAuthenticated) {
           this.$el.html('Welcome!');
-        } else {
-          this.$el.html('Permission denied.')
-          this.listenToOnce(authService, 'authenticated', this.render);
-          Promise.resolve()
-            .then(() => authService.authenticate())
-            .catch(err => authService.onError);
+          return;
         }
-      }).catch(err => authService.onError);
+
+        this.$el.html('Permission denied.')
+        return Promise.resolve()
+          .then(() => authService.authenticate().catch(err => {
+            authService.onError(err);
+            throw err;
+          }))
+          .then(() => this.render());
+        }
+      }).catch(err => {
+        this.$el.html('Oh no!');
+      });
   }
 });
 ```
