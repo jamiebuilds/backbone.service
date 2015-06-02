@@ -8,33 +8,6 @@
   Radio.Channel = classify(Radio.Channel);
 
   /**
-   * @private
-   * @method wrapHash
-   * @param {Object} hash
-   * @param {Function} start
-   */
-  function wrapHash(service, type, start) {
-    var hash = normalizeHash(service, type);
-
-    _.each(hash, function (val, key) {
-      hash[key] = function () {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
-        }
-
-        return start().then(function () {
-          return service[key].apply(service, args);
-        })['catch'](function (err) {
-          service.onError(err);
-          throw err;
-        });
-      };
-    });
-
-    return hash;
-  }
-
-  /**
    * @class Service
    */
   var backbone_service = Radio.Channel.extend({
@@ -49,12 +22,23 @@
           return _this.start();
         });
       });
+      var requests = normalizeHash(this, 'requests');
 
-      var requests = wrapHash(this, 'requests', start);
-      var commands = wrapHash(this, 'commands', start);
+      _.each(requests, function (val, key) {
+        _this.reply(key, function () {
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
 
-      this.reply(requests);
-      this.comply(commands);
+          return start().then(function () {
+            return _this[key].apply(_this, args);
+          })['catch'](function (err) {
+            _this.onError(err);
+            throw err;
+          });
+        });
+      });
+
       this._super.apply(this, arguments);
     },
 
