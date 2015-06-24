@@ -30,12 +30,15 @@
             args[_key] = arguments[_key];
           }
 
-          return start().then(function () {
+          var promise = start().then(function () {
             return _this[key].apply(_this, args);
-          })['catch'](function (err) {
-            _this.onError(err);
-            throw err;
           });
+
+          promise['catch'](function (err) {
+            _this.onError(err);
+          });
+
+          return promise;
         });
       });
 
