@@ -21,12 +21,13 @@ export default Radio.Channel.extend({
 
     _.each(requests, (val, key) => {
       this.reply(key, (...args) => {
-        return start()
-          .then(() => this[key](...args))
-          .catch(err => {
-            this.onError(err);
-            throw err;
-          });
+        let promise = start().then(() => this[key](...args));
+
+        promise.catch(err => {
+          this.onError(err);
+        });
+
+        return promise;
       });
     });
 
