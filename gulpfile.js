@@ -135,7 +135,7 @@ function test() {
 
 // Lint and run our tests
 gulp.task('test', ['lint-src', 'lint-test'], function() {
-  require('babel/register')({ modules: 'common', loose: 'all' });
+  require('babel-core/register')({ modules: 'common', loose: 'all' });
   return test();
 });
 
