@@ -1,5 +1,4 @@
 import classify from 'backbone-metal-classify';
-import normalizeHash from 'backbone-normalize-hash';
 import Radio from 'backbone.radio';
 import _ from 'underscore';
 import PromisePolyfill from 'es6-promise';
@@ -17,11 +16,10 @@ export default Radio.Channel.extend({
    */
   constructor() {
     let start = _.once(() => resolved.then(() => this.start()));
-    let requests = normalizeHash(this, 'requests');
-
+    let requests = _.result(this, 'requests');
     _.each(requests, (val, key) => {
       this.reply(key, (...args) => {
-        let promise = start().then(() => this[key](...args));
+        let promise = start().then(() => this[val](...args));
 
         promise.catch(err => {
           this.onError(err);

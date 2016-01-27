@@ -10,19 +10,25 @@ describe('Service', function() {
 
       requests: {
         foo: 'foo',
-        bar: 'bar',
+        bar: 'bar2',
       },
 
       foo: stub(),
-      bar: stub()
+      bar2: stub()
     });
 
     this.myService = new this.MyService();
   });
 
-  it('should bind requests', function() {
+  it('should bind requests where the key and value match', function() {
     return this.myService.request('foo').then(() => {
       expect(this.myService.foo).to.have.been.called;
+    });
+  });
+
+  it('should bind requests where the key and value don\'t match', function() {
+    return this.myService.request('bar').then(() => {
+      expect(this.myService.bar2).to.have.been.called;
     });
   });
 
