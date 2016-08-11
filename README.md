@@ -1,8 +1,3 @@
-# Do not use this, it was a bad idea
-
----
-
-
 # Backbone Service
 
 Simple service class for Backbone.
