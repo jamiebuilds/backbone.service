@@ -19,7 +19,7 @@ import Service from 'backbone.service';
 const AuthService = Service.extend({
   start() {
     this.user = new User();
-    return this.user.fetch();
+    return this.user.fetch({secret: this.options.secret});
   },
 
   requests: {
@@ -40,7 +40,7 @@ const AuthService = Service.extend({
   }
 });
 
-const authService = new AuthService();
+const authService = new AuthService({secret: 123456});
 
 const Page = View.extend({
   render() {

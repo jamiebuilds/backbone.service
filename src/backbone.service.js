@@ -13,8 +13,9 @@ Radio.Channel = classify(Radio.Channel);
 export default Radio.Channel.extend({
   /**
    * @constructs Service
+   * @param {Object}  options - pass options to be used for service configuration
    */
-  constructor() {
+  constructor(options) {
     let start = _.once(() => resolved.then(() => this.start()));
     let requests = _.result(this, 'requests');
     _.each(requests, (val, key) => {
@@ -28,7 +29,7 @@ export default Radio.Channel.extend({
         return promise;
       });
     });
-
+    this.options = options;
     this._super(...arguments);
   },
 
