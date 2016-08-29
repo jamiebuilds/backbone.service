@@ -11,13 +11,17 @@ describe('Service', function() {
       requests: {
         foo: 'foo',
         bar: 'bar2',
+        getOption: 'getOption'
       },
 
       foo: stub(),
-      bar2: stub()
+      bar2: stub(),
+      getOption: function() {
+        return this.options.option;
+      }
     });
 
-    this.myService = new this.MyService();
+    this.myService = new this.MyService({option: 1});
   });
 
   it('should bind requests where the key and value match', function() {
@@ -56,6 +60,12 @@ describe('Service', function() {
     }, (err) => {
       expect(err).to.equal(this.err);
       expect(this.myService.onError).to.have.been.calledWith(this.err);
+    });
+  });
+
+  it('should allow passing options object into constructor', function() {
+    return this.myService.request('getOption').then((option) => {
+      expect(option).to.be.equal(1);
     });
   });
 });
