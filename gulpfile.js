@@ -69,7 +69,7 @@ function _generate(bundle){
     sourceMap: true,
     globals: {
       'underscore': '_',
-      'es6-promise': 'Promise',
+      'es6-promise': 'ES6Promise',
       'backbone.radio': 'Backbone.Radio',
       'backbone-metal-classify': 'classify',
     }
