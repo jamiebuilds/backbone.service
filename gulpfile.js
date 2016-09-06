@@ -1,16 +1,18 @@
 const gulp = require('gulp');
 const $ = require('gulp-load-plugins')();
-const fs = require('fs');
 const del = require('del');
 const glob = require('glob');
 const path = require('path');
-const mkdirp = require('mkdirp');
 const babelify = require('babelify');
 const isparta = require('isparta');
-const esperanto = require('esperanto');
 const browserify = require('browserify');
 const runSequence = require('run-sequence');
 const source = require('vinyl-source-stream');
+const rollup = require('rollup').rollup;
+const babel = require('rollup-plugin-babel');
+const json = require('rollup-plugin-json');
+const preset = require('babel-preset-es2015-rollup');
+const file = require('gulp-file');
 
 const manifest = require('./package.json');
 const config = manifest.babelBoilerplateOptions;
@@ -59,39 +61,58 @@ createLintTask('lint-src', ['src/**/*.js']);
 // Lint our test code
 createLintTask('lint-test', ['test/**/*.js']);
 
-// Build two versions of the library
-gulp.task('build', ['lint-src', 'clean'], function(done) {
-  esperanto.bundle({
-    base: 'src',
-    entry: config.entryFileName,
+
+function _generate(bundle){
+  return bundle.generate({
+    format: 'umd',
+    moduleName: 'Backbone.Service',
+    sourceMap: true,
+    globals: {
+      'underscore': '_',
+      'es6-promise': 'ES6Promise',
+      'backbone.radio': 'Backbone.Radio',
+      'backbone-metal-classify': 'classify',
+    }
+  });
+}
+
+function bundle(opts) {
+  return rollup({
+    entry: 'src/' + config.entryFileName + '.js',
+    external: ['underscore', 'backbone-metal-classify', 'backbone.radio', 'es6-promise'],
+    plugins: [
+      json(),
+      babel({
+        sourceMaps: true,
+        presets: [ preset ],
+        babelrc: false
+      })
+    ]
   }).then(function(bundle) {
-    var res = bundle.toUmd({
-      sourceMap: true,
-      sourceMapSource: config.entryFileName + '.js',
-      sourceMapFile: exportFileName + '.js',
-      name: config.exportVarName
-    });
+    return _generate(bundle);
+  }).then(function(gen) {
+    gen.code += '\n//# sourceMappingURL=' + gen.map.toUrl();
+    return gen;
+  });
+}
 
-    // Write the generated sourcemap
-    mkdirp.sync(destinationFolder);
-    fs.writeFileSync(path.join(destinationFolder, exportFileName + '.js'), res.map.toString());
-
-    $.file(exportFileName + '.js', res.code, { src: true })
+gulp.task('build', ['lint-src', 'clean'], function(){
+  return bundle().then(function(gen) {
+    return file(exportFileName + '.js', gen.code, {src: true})
       .pipe($.plumber())
-      .pipe($.sourcemaps.init({ loadMaps: true }))
-      .pipe($.babel({ blacklist: ['useStrict'], loose: 'all' }))
-      .pipe($.sourcemaps.write('./', {addComment: false}))
+      .pipe($.sourcemaps.init({loadMaps: true}))
+      .pipe($.sourcemaps.write('./'))
       .pipe(gulp.dest(destinationFolder))
       .pipe($.filter(['*', '!**/*.js.map']))
       .pipe($.rename(exportFileName + '.min.js'))
+      .pipe($.sourcemaps.init({loadMaps: true}))
       .pipe($.uglifyjs({
         outSourceMap: true,
         inSourceMap: destinationFolder + '/' + exportFileName + '.js.map',
       }))
-      .pipe(gulp.dest(destinationFolder))
-      .on('end', done);
-  })
-  .catch(done);
+      .pipe($.sourcemaps.write('./'))
+      .pipe(gulp.dest(destinationFolder));
+  });
 });
 
 // Bundle our app for our unit tests
