@@ -90,7 +90,7 @@ function bundle(opts) {
     ]
   }).then(function(bundle) {
     return _generate(bundle);
-  }).then(gen => {
+  }).then(function(gen) {
     gen.code += '\n//# sourceMappingURL=' + gen.map.toUrl();
     return gen;
   });
