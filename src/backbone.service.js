@@ -1,9 +1,9 @@
 import classify from 'backbone-metal-classify';
 import Radio from 'backbone.radio';
 import _ from 'underscore';
-import PromisePolyfill from 'es6-promise';
+import Promise from 'es6-promise';
 
-const resolved = PromisePolyfill.Promise.resolve();
+const resolved = Promise.resolve();
 
 Radio.Channel = classify(Radio.Channel);
 
