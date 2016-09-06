@@ -88,7 +88,7 @@ function bundle(opts) {
         babelrc: false
       })
     ]
-  }).then(bundle => {
+  }).then(function(bundle) {
     return _generate(bundle);
   }).then(gen => {
     gen.code += '\n//# sourceMappingURL=' + gen.map.toUrl();
@@ -97,7 +97,7 @@ function bundle(opts) {
 }
 
 gulp.task('build', ['lint-src', 'clean'], function(){
-  return bundle().then(gen => {
+  return bundle().then(function(gen) {
     return file(exportFileName + '.js', gen.code, {src: true})
       .pipe($.plumber())
       .pipe($.sourcemaps.init({loadMaps: true}))
