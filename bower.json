@@ -1,0 +1,33 @@
+{
+  "name": "backbone.service",
+  "version": "0.5.1",
+  "description": "",
+  "main": "dist/backbone.service.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thejameskyle/backbone.service.git"
+  },
+  "ignore": [
+    "src",
+    "test",
+    ".gitignore",
+    ".jshintrc",
+    ".jscsrc",
+    ".travis.yml",
+    "gulpfile.js",
+  ],
+  "keywords": [],
+  "author": "James Kyle <me@thejameskyle.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thejameskyle/backbone.service/issues"
+  },
+  "homepage": "https://github.com/thejameskyle/backbone.service",
+  "dependencies": {
+    "backbone": "^1.1.2",
+    "backbone-metal-classify": "^1.0.1",
+    "backbone.radio": "^1.0.0",
+    "es6-promise": "^2.1.1",
+    "underscore": "^1.8.3"
+  }
+}
